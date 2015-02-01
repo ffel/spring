@@ -32,21 +32,23 @@ func main() {
 
 	for T <= 3 {
 		kk := euler(x_n, T, h, f)
+
+		fmt.Printf("%9.2f %9.2f %9.2f %9.2f %9.2f\n",
+			T, x_n[0], x_n[1], kk[0]/h, kk[1]/h)
+
 		for i, k := range kk {
 			x_n[i] += k
 		}
+
 		T += h
 	}
 }
 
 func euler(x_n []num, t_n, h num, dxdt []ode) (k []num) {
 	d_n := make([]num, len(x_n))
-
 	for i, f := range dxdt {
 		d_n[i] = f(x_n, t_n)
 	}
-
-	print(t_n, x_n, d_n)
 
 	k = make([]num, len(x_n))
 	for i, d := range d_n {
@@ -54,18 +56,4 @@ func euler(x_n []num, t_n, h num, dxdt []ode) (k []num) {
 	}
 
 	return k
-}
-
-func print(t_n num, x_n []num, d_n []num) {
-	x_vals := ""
-	for _, x := range x_n {
-		x_vals += fmt.Sprintf(" %9.2f", x)
-	}
-
-	d_vals := ""
-	for _, d := range d_n {
-		d_vals += fmt.Sprintf(" %9.2f", d)
-	}
-
-	fmt.Printf("%9.2f%s%s\n", t_n, x_vals, d_vals)
 }
