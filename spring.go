@@ -23,7 +23,7 @@ func main() {
 
 	k = 1
 	m = 1
-	b = 1
+	b = 0.4
 
 	dxdt := func(xx []num, t num) num { v := xx[1]; return v }
 	dvdt := func(xx []num, t num) num { x, v := xx[0], xx[1]; return -k*x/m - b*v/m }
@@ -33,12 +33,12 @@ func main() {
 	fmt.Printf("#%8s %9s %9s %9s %9s\n", "t", "x", "v", "x'", "v'")
 
 	print(fixed_step(euler, odes, []num{-0.5, 0}, 0, 15, 0.25), odes)
-	//adaptive_step(euler, odes, []num{-0.5, 0}, 15, 0.01, 0.5)
-
 	fmt.Println("")
-
+	print(adaptive_step(euler, odes, []num{-0.5, 0}, 0, 15, 0.01, 0.5), odes)
+	fmt.Println("")
 	print(fixed_step(midpoint, odes, []num{-0.5, 0}, 0, 15, 0.25), odes)
-	//adaptive_step(midpoint, odes, -0.5, 0, 15, 0.01, 0.5)
+	fmt.Println("")
+	print(adaptive_step(midpoint, odes, []num{-0.5, 0}, 0, 15, 0.01, 0.5), odes)
 }
 
 func print(data []result, dxdt []ode) {
@@ -75,37 +75,28 @@ func fixed_step(method integrator, dxdt []ode, xx []num, t0, tmax, h num) []resu
 	return r
 }
 
-func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
-	var x, v, T num
-
-	x = x0
-	v = v0
-
-	h := h0
-
-	T = 0.0
-
-	x_full := []num{x, v}
+func adaptive_step(method integrator, dxdt []ode, xx []num, t0, tmax, hmin, h num) []result {
+	var T num = t0
 
 	var kk_full []num
 
 	var H num
 
+	r := make([]result, 0, 200)
+
 	for T <= tmax {
 
-		// max 5 attempts
+		// max 5 decrements
 		for a := 0; a < 5; a++ {
-			x_full_tmp := make([]num, len(x_full))
-			x_half_tmp := make([]num, len(x_full))
+			x_full_tmp := make([]num, len(xx))
+			x_half_tmp := make([]num, len(xx))
 
-			for i, x := range x_full {
-				x_half_tmp[i] = x
-			}
+			copy(x_half_tmp, xx)
 
-			kk_full = method(x_full, T, h, dxdt)
+			kk_full = method(xx, T, h, dxdt)
 
 			for i, k := range kk_full {
-				x_full_tmp[i] = x_full[i] + k
+				x_full_tmp[i] = xx[i] + k
 			}
 
 			var kk_half []num
@@ -127,7 +118,7 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 				break
 			} else if q > 0.005 {
 				h /= 2
-			} else if q < 0.0001 {
+			} else if q < 0.0005 {
 				h *= 2
 				break
 			} else {
@@ -135,15 +126,19 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 			}
 		}
 
-		fmt.Printf("%9.3f %9.3f %9.3f %9.2f %9.2f\n",
-			T, x_full[0], x_full[1], kk_full[0]/h, kk_full[1]/h)
+		x := make([]num, len(xx))
+		copy(x, xx)
+
+		r = append(r, result{T, x})
 
 		T += H
 
 		for i, k := range kk_full {
-			x_full[i] += k
+			xx[i] += k
 		}
 	}
+
+	return r
 }
 
 func quality(x_full []num, x_half []num, h num) num {
