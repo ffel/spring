@@ -25,10 +25,15 @@ func main() {
 
 	odes := []ode{dxdt, dvdt}
 
+	fmt.Printf("#%8s %9s %9s %9s %9s\n", "t", "x", "v", "x'", "v'")
+
 	// fixed_step(euler, odes, -0.5, 0, 3, 0.25)
-	adaptive_step(euler, odes, -0.5, 0, 3, 0.01, 0.5)
+	adaptive_step(euler, odes, -0.5, 0, 15, 0.01, 0.5)
+
+	fmt.Println("")
+
 	// fixed_step(midpoint, odes, -0.5, 0, 3, 0.25)
-	adaptive_step(midpoint, odes, -0.5, 0, 3, 0.01, 0.5)
+	adaptive_step(midpoint, odes, -0.5, 0, 15, 0.01, 0.5)
 }
 
 // too much tied to particular x, v problem
@@ -41,8 +46,6 @@ func fixed_step(method integrator, dxdt []ode, x0, v0, tmax, h num) {
 	T = 0.0
 
 	x_n := []num{x, v}
-
-	fmt.Printf("%9s %9s %9s %9s %9s\n", "t", "x", "v", "x'", "v'")
 
 	for T <= tmax {
 		kk := method(x_n, T, h, dxdt)
@@ -70,10 +73,6 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 	T = 0.0
 
 	x_full := []num{x, v}
-
-	// moet worden gemaakt
-
-	fmt.Printf("%9s %9s %9s %9s %9s\n", "t", "x", "v", "x'", "v'")
 
 	var kk_full []num
 
@@ -115,7 +114,7 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 			// store h as the used value
 			H = h
 
-			fmt.Printf("%9d %9.3f %9.3f\n", a, h, q)
+			// fmt.Printf("%9d %9.3f %9.3f\n", a, h, q)
 
 			if h < hmin {
 				break
