@@ -118,9 +118,9 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 
 			if h < hmin {
 				break
-			} else if q > 0.01 {
+			} else if q > 0.005 {
 				h /= 2
-			} else if q < 0.005 {
+			} else if q < 0.0001 {
 				h *= 2
 				break
 			} else {
