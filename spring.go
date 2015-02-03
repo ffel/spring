@@ -7,6 +7,11 @@ import "fmt"
 // num as short for float64
 type num float64
 
+type result struct {
+	t  num
+	xx []num
+}
+
 // the spring is described by two first order ode
 type ode func([]num, num) num
 
@@ -27,39 +32,47 @@ func main() {
 
 	fmt.Printf("#%8s %9s %9s %9s %9s\n", "t", "x", "v", "x'", "v'")
 
-	// fixed_step(euler, odes, -0.5, 0, 3, 0.25)
-	adaptive_step(euler, odes, -0.5, 0, 15, 0.01, 0.5)
+	print(fixed_step(euler, odes, []num{-0.5, 0}, 0, 15, 0.25), odes)
+	//adaptive_step(euler, odes, []num{-0.5, 0}, 15, 0.01, 0.5)
 
 	fmt.Println("")
 
-	// fixed_step(midpoint, odes, -0.5, 0, 3, 0.25)
-	adaptive_step(midpoint, odes, -0.5, 0, 15, 0.01, 0.5)
+	print(fixed_step(midpoint, odes, []num{-0.5, 0}, 0, 15, 0.25), odes)
+	//adaptive_step(midpoint, odes, -0.5, 0, 15, 0.01, 0.5)
 }
 
-// too much tied to particular x, v problem
-func fixed_step(method integrator, dxdt []ode, x0, v0, tmax, h num) {
-	var x, v, T num
+func print(data []result, dxdt []ode) {
+	// assume system with two ode
+	for _, d := range data {
+		fmt.Printf("%9.3f %9.3f %9.3f %9.3f %9.3f\n",
+			d.t, d.xx[0], d.xx[1], dxdt[0](d.xx, d.t), dxdt[1](d.xx, d.t))
+	}
+}
 
-	x = x0
-	v = v0
+func fixed_step(method integrator, dxdt []ode, xx []num, t0, tmax, h num) []result {
+	var T num
 
-	T = 0.0
+	T = t0
 
-	x_n := []num{x, v}
+	r := make([]result, 0, 200)
 
 	for T <= tmax {
-		kk := method(x_n, T, h, dxdt)
+		kk := method(xx, T, h, dxdt)
 
-		fmt.Printf("%9.3f %9.2f %9.2f %9.2f %9.2f\n",
-			T, x_n[0], x_n[1], kk[0]/h, kk[1]/h)
+		// store a copy of xx in r, not x itself for that will change
+		x := make([]num, len(xx))
+		copy(x, xx)
+
+		r = append(r, result{T, x})
 
 		for i, k := range kk {
-			x_n[i] += k
+			xx[i] += k
 		}
 
 		T += h
 	}
 
+	return r
 }
 
 func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
@@ -89,11 +102,7 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 				x_half_tmp[i] = x
 			}
 
-			// hier een inner loop waarin je de berekening obv h moet worden vergeleken met de h/2
 			kk_full = method(x_full, T, h, dxdt)
-
-			// fmt.Printf("%9.3f %9.2f %9.2f %9.2f %9.2f\n",
-			// 	T, x_full[0], x_full[1], kk_full[0]/h, kk_full[1]/h)
 
 			for i, k := range kk_full {
 				x_full_tmp[i] = x_full[i] + k
@@ -114,8 +123,6 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 			// store h as the used value
 			H = h
 
-			// fmt.Printf("%9d %9.3f %9.3f\n", a, h, q)
-
 			if h < hmin {
 				break
 			} else if q > 0.005 {
@@ -126,28 +133,16 @@ func adaptive_step(method integrator, dxdt []ode, x0, v0, tmax, hmin, h0 num) {
 			} else {
 				break
 			}
-			// fmt.Printf("%9.3f %9.3f %9.3f %9.2f %9.2f (full)\n",
-			// 	T, x_full[0], x_full[1], kk_full[0]/h, kk_full[1]/h)
-			// fmt.Printf("%9.3f %9.3f %9.3f %9.2f %9.2f (halfs)\n",
-			// 	T, x_half[0], x_half[1], kk_half[0]/h, kk_half[1]/h)
-
-			// I guess (x_half - x_full)/h is a reasonable guess for how accurate the bigger one is.
-
-			// fmt.Printf("%9s %9.3f %9.3f\n", "", Delta[0]/h, Delta[1]/h)
-
 		}
 
 		fmt.Printf("%9.3f %9.3f %9.3f %9.2f %9.2f\n",
 			T, x_full[0], x_full[1], kk_full[0]/h, kk_full[1]/h)
-
-		//increment x_full
 
 		T += H
 
 		for i, k := range kk_full {
 			x_full[i] += k
 		}
-
 	}
 }
 
