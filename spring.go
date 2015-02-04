@@ -40,6 +40,8 @@ func main() {
 	fmt.Println("")
 	print(adaptive_step(midpoint, odes, []num{-0.5, 0}, 0, 15, 0.01, 0.5), odes)
 	fmt.Println("")
+	print(fixed_step(rk4, odes, []num{-0.5, 0}, 0, 15, 0.25), odes)
+	fmt.Println("")
 	print(adaptive_step(rk4, odes, []num{-0.5, 0}, 0, 15, 0.01, 0.5), odes)
 }
 
@@ -208,31 +210,33 @@ func rk4(xx0 []num, t, h num, dxdt []ode) (kk []num) {
 	dd2 := make([]num, len(xx0))
 	dd3 := make([]num, len(xx0))
 
-	xx := make([]num, len(xx0))
+	xxNext := make([]num, len(xx0))
 
 	for i, f := range dxdt {
 		dd0[i] = f(xx0, t)
-		xx[i] = xx0[i] + h/2*dd0[i]
+		xxNext[i] = xx0[i] + h/2*dd0[i]
 	}
 
 	for i, f := range dxdt {
-		dd1[i] = f(xx, t)
-		xx[i] = xx0[i] + h/2*dd1[i]
+		dd1[i] = f(xxNext, t+h/2)
+		xxNext[i] = xx0[i] + h/2*dd1[i]
 	}
 
 	for i, f := range dxdt {
-		dd2[i] = f(xx, t)
-		xx[i] = xx0[i] + h*dd2[i]
+		dd2[i] = f(xxNext, t+h/2)
+		xxNext[i] = xx0[i] + h*dd2[i]
 	}
 
 	for i, f := range dxdt {
-		dd3[i] = f(xx, t)
+		dd3[i] = f(xxNext, t+h)
 	}
 
-	kk = make([]num, len(xx))
+	// fmt.Fprintf(os.Stderr, "%#v\n", dd3)
+
+	kk = make([]num, len(xxNext))
 
 	for i := range xx0 {
-		kk[i] = h / 6 * (dd0[i] + 2*dd1[i] + 2*dd2[1] + dd3[i])
+		kk[i] = h / 6 * (dd0[i] + 2*dd1[i] + 2*dd2[i] + dd3[i])
 	}
 
 	return kk
