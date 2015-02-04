@@ -231,8 +231,6 @@ func rk4(xx0 []num, t, h num, dxdt []ode) (kk []num) {
 		dd3[i] = f(xxNext, t+h)
 	}
 
-	// fmt.Fprintf(os.Stderr, "%#v\n", dd3)
-
 	kk = make([]num, len(xxNext))
 
 	for i := range xx0 {
