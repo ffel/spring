@@ -1,4 +1,4 @@
-Spring Calculations
+Spring Calculations [![Build Status](https://travis-ci.org/ffel/spring.svg?branch=master)](https://travis-ci.org/ffel/spring)
 ===================
 
 See [my physics lab](http://www.myphysicslab.com/spring1.html)
